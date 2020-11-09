@@ -126,3 +126,6 @@ dmypy.json
 
 
 .idea/
+.vscode/
+.ipynb_checkpoints/
+GoogleNews-vectors-negative300.bin.gz

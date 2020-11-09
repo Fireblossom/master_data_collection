@@ -17,14 +17,33 @@ tokenizer.add_special_case("[laugh]", [{ORTH: "[laugh]"}])
 tokenizer.add_special_case("[neutral]", [{ORTH: "[neutral]"}])
 tokenizer.add_special_case("[username]", [{ORTH: "[username]"}])
 
+
+from py_tec.data_augmentation import DataAugment
+
+
 class TecDataset:
     def __init__(self,
                  text_data,
                  target,
-                 tokenize=True):
+                 tokenize=True,
+                 augment=False):
         self.target = target
         self.tokenize = tokenize
         self.text_data = self.__cleaning(text_data)
+        if augment:
+            extra = []
+            extra_label = []
+            da = DataAugment()
+            for i in range(len(target)):
+                if target[i] == 3:
+                    extra.append(da.augment(text_data[i]))
+                    extra_label.append(3)
+                if target[i] == 5:
+                    for j in range(3):
+                        extra.append(da.augment(text_data[i]))
+                        extra_label.append(5)
+            self.target += extra_label
+            self.text_data += self.__cleaning(extra)
 
     def __cleaning(self, text_list):
         """

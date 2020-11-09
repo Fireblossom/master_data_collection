@@ -6,3 +6,6 @@ nltk
 transformers
 spacy
 langdetect
+gensim
+textblob
+googletrans 
