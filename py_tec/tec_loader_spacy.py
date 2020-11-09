@@ -75,8 +75,10 @@ class TecDataset:
 
 class TecLoader:
     def __init__(self,
-                 tokenize=True):
+                 tokenize=True,
+                 augment=False):
         self.tokenize = tokenize
+        self.augment = augment
 
     def load_tec(self, s_tec_path):
         f_tec = open(s_tec_path, 'r', encoding="utf8")
@@ -96,7 +98,8 @@ class TecLoader:
         return TecDataset(
             text_data,
             target,
-            self.tokenize
+            self.tokenize,
+            self.augment
         )
 
 
