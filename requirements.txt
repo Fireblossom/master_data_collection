@@ -1,0 +1,8 @@
+scipy
+numpy
+sklearn
+tokenizers
+nltk
+transformers
+spacy
+langdetect
