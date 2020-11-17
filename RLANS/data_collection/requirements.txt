@@ -1,0 +1,11 @@
+scipy
+numpy
+sklearn
+tokenizers
+nltk
+transformers
+spacy
+langdetect
+gensim
+textblob
+googletrans 
