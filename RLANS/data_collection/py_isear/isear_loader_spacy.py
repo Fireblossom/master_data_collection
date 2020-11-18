@@ -1,6 +1,6 @@
 import re
 from nltk.corpus import stopwords
-
+import pickle
 from data_collection.py_isear import enums
 
 remove_list = set(stopwords.words('english'))
@@ -27,10 +27,12 @@ class IsearDataSet:
                  data=IsearSubset([], []),
                  target=IsearSubset([], []),
                  text_data=[],
-                 tokenize=True):
+                 tokenize=True,
+                 level=0):
         self.__data = data
         self.__target = target
         self.tokenize = tokenize
+        self.level = level
         self.__text_data = self.__cleaning(text_data)
         assert len(data.values) == len(target.values) == len(text_data)
 
@@ -55,6 +57,9 @@ class IsearDataSet:
             if self.tokenize:
                 text = tokenizer(text)
                 text = [w.text for w in text if w.text not in remove_list]
+                if self.level != 0:
+                    vocab = pickle.load(open('RLANS/data_collection/py_isear/vocab'+str(self.level)+'.pkl', 'rb'))
+                    text = [w for w in text if w in vocab]
             #print(text)
 
             clean_text_list.append(text)
@@ -74,6 +79,12 @@ class IsearDataSet:
 
     def get_data(self):
         return self.__text_data
+
+    def set_data(self, data):
+        self.__text_data = data
+
+    def set_target(self, target):
+        self.__target = IsearSubset(target, target)
 
 
 class NoSuchFieldException(BaseException):
@@ -101,7 +112,7 @@ class IsearLoader:
         self.provide_text = provide_text
         self.tokenize = tokenize
 
-    def load_isear(self, s_isear_path):
+    def load_isear(self, s_isear_path, level):
         f_isear = open(s_isear_path, "r")
         '''
         The isear file extracted for the purpose of this initial
@@ -133,7 +144,8 @@ class IsearLoader:
         return IsearDataSet(attributes_subset,
                             target_subset,
                             text_data,
-                            self.tokenize)
+                            self.tokenize,
+                            level)
 
     def __parse_entry(self,
                       isear_row,  # The row of the entry
@@ -248,4 +260,4 @@ if __name__ == '__main__':
     target = ['EMOT']
     loader = IsearLoader(attributes, target, True)
     dataset = loader.load_isear('../isear.csv')
-    print(dataset.get_freetext_content())
+    print(dataset.get_data())

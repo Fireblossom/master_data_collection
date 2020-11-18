@@ -57,6 +57,11 @@ parser.add_argument('--save', type=str,
 parser.add_argument('--pre_train', type=str,
                     default=os.getcwd()+'/lm_model/',
                     help='path to save the final model')
+parser.add_argument('--tokenize', action='store_true',
+                    help='use tokenizer')
+parser.add_argument('--level', type=int, default=0, metavar='N',
+                    help='vocab level')
+
 
 args = parser.parse_args()
 # create the directory to save model if the directory is not exist
@@ -72,41 +77,52 @@ if not os.path.exists(result_dir):
 # Set the random seed manually for reproducibility.
 torch.manual_seed(args.seed)
 if torch.cuda.is_available():
+    device = torch.device("cuda" if args.cuda else "cpu")
     if not args.cuda:
         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
-device = torch.device("cuda" if args.cuda else "cpu")
+
 
 ###############################################################################
 # Load data
 ###############################################################################
-dic_exists = os.path.isfile(os.path.join(args.data + 'action_dictionary.pkl'))
+dic_exists = os.path.isfile(os.path.join(args.data, 'action_dictionary.pkl'))
+print(dic_exists)
 if dic_exists:
-    with open(os.path.join(args.data + 'action_dictionary.pkl'), 'rb') as input:
+    with open(os.path.join(args.data, 'action_dictionary.pkl'), 'rb') as input:
         Corpus_Dic = pickle.load(input)
 else:
     Corpus_Dic = data.Dictionary()
 
+glove = False
+if glove:
+    import gensim
+    glove_model = gensim.models.KeyedVectors.load_word2vec_format('emb_word2vec_format.txt')
+    Corpus_Dic.build_dic(glove_model.index2word)
+
 test_data_name = os.path.join(args.data, 'test.csv')
+
+tokenize = True if args.tokenize else False
 
 if args.data == 'ssec':
     import json
     train_data = data.SSEC_DataSet('RLANS/data_collection/ssec-aggregated/train-combined-0.33.csv') 
     test_data = data.SSEC_DataSet('RLANS/data_collection/ssec-aggregated/test-combined-0.33.csv')
     train_data.load(dictionary=Corpus_Dic)
-    train_data.labels = json.load(open('ssec_new_label.json')ha)
+    train_data.labels = json.load(open('ssec_new_label.json'))
     test_data.load(dictionary=Corpus_Dic, train_mode=False)
     test_data.labels = json.load(open('ssec_new_label_test.json'))
 else:
-    dataset = data.TEC_ISEAR_DataSet(args.data)
-    train_data, test_data = dataset.load(dictionary=Corpus_Dic)
+    train_data = data.TEC_ISEAR_DataSet(args.data)
+    test_data = data.TEC_ISEAR_DataSet(args.data)
+    train_data.load(dictionary=Corpus_Dic, train_mode=True, tokenize=tokenize, level=args.level)
+    test_data.load(dictionary=Corpus_Dic, train_mode=False, tokenize=tokenize, level=args.level)
 
 # save the dictionary
-if not dic_exists:
-    with open(os.path.join(args.data, 'action_dictionary.pkl'), 'wb') as output:
-        pickle.dump(Corpus_Dic, output, pickle.HIGHEST_PROTOCOL)
-    print("load data and save the dictionary to '{}'".
-          format(os.path.join(args.data, 'action_dictionary.pkl')))
+with open(os.path.join(args.data, 'action_dictionary.pkl'), 'wb') as output:
+    pickle.dump(Corpus_Dic, output, pickle.HIGHEST_PROTOCOL)
+print("load data and save the dictionary to '{}'".
+        format(os.path.join(args.data, 'action_dictionary.pkl')))
 
 bitch_size = args.batch_size
 train_loader = torch.utils.data.DataLoader(dataset=train_data,
@@ -127,12 +143,17 @@ print('The size of the dictionary is', len(Corpus_Dic))
 learning_rate = args.lr
 
 ntokens = len(Corpus_Dic)
-model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid,
-                       args.nlayers, args.nclass, args.dropout_em, 
-                       args.dropout_rnn, args.dropout_cl, args.tied).to(device)
+if not glove:
+    model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid,
+                        args.nlayers, args.nclass, args.dropout_em, 
+                        args.dropout_rnn, args.dropout_cl, args.tied).to(device)
+else:
+    model = model.RNNModel(args.model, ntokens, 300, args.nhid,
+                        args.nlayers, args.nclass, args.dropout_em, 
+                        args.dropout_rnn, args.dropout_cl, args.tied, 60, glove_model.vectors).to(device)
 
 criterion = nn.BCEWithLogitsLoss() if args.data == 'ssec' else nn.CrossEntropyLoss(reduction='none')
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) #(model.parameters(), lr=learning_rate, momentum=0.9)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=args.reduce_rate)
 
 ###############################################################################
@@ -157,6 +178,7 @@ def train():
         seq_lengths = np.transpose(sample_batched[4])
         hidden = model.init_hidden(token_seqs.shape[1])
         output = model(token_seqs, hidden, seq_lengths)
+        #print(labels)
         element_loss = criterion(output, labels)
         loss = torch.mean(element_loss)
         # Before the backward pass, use the optimizer object to zero all of the

@@ -5,8 +5,8 @@ import json
 
 
 dataset = SsecDataset([],[])
-dataset.text_data = json.load(open('ssec_new_data.json'))
-dataset.target = json.load(open('ssec_new_label.json'))
+dataset.text_data = json.load(open('onetime_scripts/ssec_new_data.json'))
+dataset.target = json.load(open('onetime_scripts/ssec_new_label.json'))
 
 
 f = []
@@ -25,13 +25,13 @@ for i in range(8):
 
     all_tokens = [element for lis in dataset.get_data() for element in lis]
     Freq_dist_nltk = nltk.FreqDist(all_tokens)
-    most_common_word = [word for (word, _) in Freq_dist_nltk.most_common(2000)]
+    most_common_word = [word for (word, _) in Freq_dist_nltk.most_common(8000)]
 
 
     train_set = nltk.apply_features(doc_feature, documents)
     classifier = nltk.NaiveBayesClassifier.train(train_set)
     classifier.show_most_informative_features(n=10)
-    features = classifier.most_informative_features(n=10)
+    features = classifier.most_informative_features(n=8000)
 
     # print(features)
     features_count = []

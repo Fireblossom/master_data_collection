@@ -129,3 +129,7 @@ dmypy.json
 .vscode/
 .ipynb_checkpoints/
 GoogleNews-vectors-negative300.bin.gz
+*.pt
+*.pkl
+*.tar
+emb_word2vec_format.txt

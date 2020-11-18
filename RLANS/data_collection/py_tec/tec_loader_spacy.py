@@ -7,6 +7,7 @@ remove_list = remove_list.union(set(string.punctuation))
 remove_list = remove_list.union({'“', '”', ' ', '-', "'m", "n't", "'s", "'ll", "'ve", "'re"})
 import spacy
 from spacy.symbols import ORTH
+import pickle
 
 nlp = spacy.load("en_core_web_sm")
 tokenizer = nlp.tokenizer
@@ -25,9 +26,11 @@ class TecDataset:
                  text_data,
                  target,
                  tokenize=True,
+                 level=0,
                  augment=False):
         self.target = target
         self.tokenize = tokenize
+        self.level = level
         self.text_data = self.__cleaning(text_data)
         if augment:
             extra = []
@@ -63,6 +66,9 @@ class TecDataset:
             if self.tokenize:
                 text = tokenizer(text)
                 text = [w.text for w in text if w.text not in remove_list]
+                if self.level != 0:
+                    vocab = pickle.load(open('RLANS/data_collection/py_tec/vocab'+str(self.level)+'.pkl', 'rb'))
+                    text = [w for w in text if w in vocab]
             # print(text)
             clean_text_list.append(text)
         return clean_text_list
@@ -81,7 +87,7 @@ class TecLoader:
         self.tokenize = tokenize
         self.augment = augment
 
-    def load_tec(self, s_tec_path):
+    def load_tec(self, s_tec_path, level):
         f_tec = open(s_tec_path, 'r', encoding="utf8")
         text_data = []
         target = []
@@ -100,6 +106,7 @@ class TecLoader:
             text_data,
             target,
             self.tokenize,
+            level,
             self.augment
         )
 

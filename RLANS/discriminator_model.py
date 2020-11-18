@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 
 
 def weights_init(m):
@@ -11,10 +12,13 @@ class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
     def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nclass, 
-                 dropout_em=0.5,dropout_rnn=0,dropout_out=0, tie_weights=False, n_cl_hidden=30):
+                 dropout_em=0.5,dropout_rnn=0,dropout_out=0, tie_weights=False, n_cl_hidden=30,
+                 glove_vectors=None):
         super(RNNModel, self).__init__()
         self.drop_em = nn.Dropout(dropout_em)
         self.encoder = nn.Embedding(ntoken, ninp)
+        if glove_vectors is not None:
+            self.encoder.from_pretrained(torch.FloatTensor(glove_vectors))
         if rnn_type in ['LSTM', 'GRU']:
             self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout_rnn)
         else:

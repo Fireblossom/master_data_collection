@@ -91,17 +91,25 @@ else:
     train_data_name = os.path.join(args.data, str(args.number_per_class)+'_labeled_train.csv')
 #test_data_name = os.path.join(args.data, 'test.csv')
 
-train_data = data.Csv_DataSet(train_data_name)
-#test_data = data.Csv_DataSet(test_data_name)
-train_data.load(dictionary=Corpus_Dic)
-#test_data.load(dictionary=Corpus_Dic)
+if args.data == 'ssec':
+    import json
+    train_data = data.SSEC_DataSet('RLANS/data_collection/ssec-aggregated/train-combined-0.33.csv') 
+    #test_data = data.SSEC_DataSet('RLANS/data_collection/ssec-aggregated/test-combined-0.33.csv')
+    train_data.load(dictionary=Corpus_Dic)
+    train_data.labels = json.load(open('ssec_new_label.json'))
+    #test_data.load(dictionary=Corpus_Dic, train_mode=False)
+    #test_data.labels = json.load(open('ssec_new_label_test.json'))
+else:
+    train_data = data.TEC_ISEAR_DataSet(args.data)
+    #test_data = data.TEC_ISEAR_DataSet(args.data)
+    train_data.load(dictionary=Corpus_Dic, train_mode=True, tokenize=False)
+    #test_data.load(dictionary=Corpus_Dic, train_mode=True, tokenize=True)
 
 # save the dictionary
-if not dic_exists:
-    with open(os.path.join(args.data, 'action_dictionary.pkl'), 'wb') as output:
-        pickle.dump(Corpus_Dic, output, pickle.HIGHEST_PROTOCOL)
-    print("load data and save the dictionary to '{}'".
-          format(os.path.join(args.data, 'action_dictionary.pkl')))
+with open(os.path.join(args.data, 'action_dictionary.pkl'), 'wb') as output:
+    pickle.dump(Corpus_Dic, output, pickle.HIGHEST_PROTOCOL)
+print("load data and save the dictionary to '{}'".
+        format(os.path.join(args.data, 'action_dictionary.pkl')))
 
 bitch_size = args.batch_size
 train_loader = torch.utils.data.DataLoader(dataset=train_data,
@@ -121,7 +129,7 @@ model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid,
                        args.nlayers, args.dropout_em, args.dropout_rnn, args.dropout_cl, args.tied).to(device)
 
 criterion = nn.CrossEntropyLoss(reduction='none')
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=args.reduce_rate)
 
 
