@@ -2,6 +2,7 @@ import re
 from nltk.corpus import stopwords
 import pickle
 from data_collection.py_isear import enums
+import emoji
 
 remove_list = set(stopwords.words('english'))
 import string
@@ -46,6 +47,8 @@ class IsearDataSet:
             text = text.replace('谩', '')
             text = text.replace('á ', '')
             text = text.replace('á', '')
+            text = re.sub(r"\ {2,}", ' ', text)
+            text = emoji.demojize(text)
             if re.findall(r'\[.*((No)|(not)|(Never)).*\]', text):
                 text = ''
             elif re.findall(r'\[.*((same)|(Same)).*\]', text):

@@ -28,7 +28,7 @@ if False:
         else:
             tec_test.write(line)
 
-if True:
+if False:
     isear_train = open('isear_train.csv')
     isear_train_labeled = open('isear_train_labeled.csv', 'w')
     count = [0] * 7
@@ -38,4 +38,24 @@ if True:
         if count[int(line.split('|')[11])-1] <= 500:
             isear_train_labeled.write(line)
             count[int(line.split('|')[11])-1] += 1
+
+
+if True:
+    LABEL_MAPPING = {
+        ':: joy\n': 1,
+        ':: fear\n': 2,
+        ':: anger\n': 3,
+        ':: sadness\n': 4,
+        ':: disgust\n': 5,
+        ':: surprise\n': 6
+    }
+    tec_train = open('tec_train.txt')
+    tec_train_labeled = open('tec_train_labeled.txt', 'w')
+    count = [0] * 6
+    first_line = tec_train.readline()
+    tec_train_labeled.write(first_line)
+    for line in tec_train:
+        if count[LABEL_MAPPING[line.split('\t')[-1]]-1] <= 500:
+            tec_train_labeled.write(line)
+            count[LABEL_MAPPING[line.split('\t')[-1]]-1]
 

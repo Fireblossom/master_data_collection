@@ -9,6 +9,7 @@ csv.field_size_limit(sys.maxsize)
 from data_collection.py_isear.isear_loader_spacy import IsearLoader, IsearDataSet, IsearSubset
 from data_collection.py_ssec.ssec_loader_spacy import SsecLoader, SsecDataset
 from data_collection.py_tec.tec_loader_spacy import TecLoader, TecDataset
+from data_collection.py_additional.py_emoevent import EmoeventLoader, TwitterLoader
 import json
 
 
@@ -187,7 +188,7 @@ class TEC_ISEAR_DataSet(Dataset):
         self.length = 0
         self.max_length = 0
 
-    def load(self, dictionary=None, train_mode=True, tokenize=True, level=0):
+    def load(self, dictionary=None, train_mode=True, tokenize=True, level=0, addition=False):
         if self.file == 'isear':
             attributes = []
             target = ['EMOT']
@@ -196,6 +197,7 @@ class TEC_ISEAR_DataSet(Dataset):
                 data = loader.load_isear('isear_train.csv', level)
             else:
                 data = loader.load_isear('isear_test.csv', level)
+
             if train_mode == 'lm':
                 from convokit import Corpus, download
                 corpus = Corpus(filename=download("friends-corpus"))
@@ -206,19 +208,30 @@ class TEC_ISEAR_DataSet(Dataset):
                 t = IsearSubset([1]*len(text), [1]*len(text))
                 data = IsearDataSet(t, t, text, tokenize)
                 train_mode = True
-            '''attributes = []
-            target = ['EMOT']
-            loader = IsearLoader(attributes, target, True)
-            data = loader.load_isear('RLANS/data_collection/isear.csv')
-            if tokenize is False: 
-                data.set_data(json.load(open('isear_raw_data.json')))'''
-                #print(data.get_data())
+            
+            if addition == 'emoevent':
+                loader = EmoeventLoader(tokenize=tokenize)
+                loader.load_emoevent('dataset_emotions_EN.txt', data)            
+
         elif self.file == 'tec':
-            loader = TecLoader(tokenize, augment=True)
+            loader = TecLoader(tokenize, augment=False)
             if train_mode is True:
                 data = loader.load_tec('tec_train.txt', level)
             else:
                 data = loader.load_tec('tec_test.txt', level)
+
+            if addition == 'emoevent':
+                loader = EmoeventLoader(tokenize=tokenize)
+                loader.load_emoevent('dataset_emotions_EN.txt', data)
+            elif addition == 'twitter':
+                loader = TwitterLoader()
+                loader.load_twitter('RLANS/data_collection/scrape/anger_en.txt', data)
+                loader.load_twitter('RLANS/data_collection/scrape/disgust_en.txt', data)
+                loader.load_twitter('RLANS/data_collection/scrape/fear_en.txt', data)
+                loader.load_twitter('RLANS/data_collection/scrape/joy_en.txt', data)
+                loader.load_twitter('RLANS/data_collection/scrape/sadness_en.txt', data)
+                loader.load_twitter('RLANS/data_collection/scrape/surprise_en.txt', data)
+                
             # data.text_data = json.load(open('tec_data_da.json'))
             # data.target = json.load(open('tec_target_da.json'))
 

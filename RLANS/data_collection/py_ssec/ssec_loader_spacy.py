@@ -7,6 +7,7 @@ remove_list = remove_list.union(set(string.punctuation))
 remove_list = remove_list.union({'“', '”', ' ', '—', "'m", "n't", "'s", "'ll", "'ve", "'re"})
 import spacy
 from spacy.symbols import ORTH
+import emoji
 
 nlp = spacy.load("en_core_web_sm")
 tokenizer = nlp.tokenizer
@@ -40,8 +41,10 @@ class SsecDataset:
             text = re.sub(r"-_+-", '[neutral]', text)
             text = re.sub(r"(ha){2,}a*h*", 'ha', text)
             text = re.sub(r"\.{2,}", '..', text)
+            text = re.sub(r"\ {2,}", ' ', text)
             text = text.replace('\n','')
             text = text.lower()
+            text = emoji.demojize(text)
             if self.tokenize:
                 text = tokenizer(text)
                 text = [w.text for w in text if w.text not in remove_list]

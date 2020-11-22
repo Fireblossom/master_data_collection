@@ -4,7 +4,7 @@ import random
 
 
 loader = TecLoader(True)
-dataset = loader.load_tec('tec_train.txt')
+dataset = loader.load_tec('tec_train.txt', level=0)
 documents = []
 for text, target in zip(dataset.get_data(), dataset.get_target()):
     documents.append((text, target))
@@ -12,7 +12,7 @@ random.shuffle(documents)
 
 all_tokens = [element for lis in dataset.get_data() for element in lis]
 Freq_dist_nltk = nltk.FreqDist(all_tokens)
-most_common_word = [word for (word, _) in Freq_dist_nltk.most_common(8000)]
+most_common_word = [word for (word, _) in Freq_dist_nltk.most_common(20000)]
 
 
 def doc_feature(doc):
@@ -26,7 +26,7 @@ def doc_feature(doc):
 train_set = nltk.apply_features(doc_feature, documents)
 classifier = nltk.NaiveBayesClassifier.train(train_set)
 classifier.show_most_informative_features(n=20)
-features = classifier.most_informative_features(n=8000)
+features = classifier.most_informative_features(n=20000)
 
 # print(features)
 features_count = []

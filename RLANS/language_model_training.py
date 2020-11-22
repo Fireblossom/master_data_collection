@@ -102,7 +102,7 @@ if args.data == 'ssec':
 else:
     train_data = data.TEC_ISEAR_DataSet(args.data)
     #test_data = data.TEC_ISEAR_DataSet(args.data)
-    train_data.load(dictionary=Corpus_Dic, train_mode=True, tokenize=False)
+    train_data.load(dictionary=Corpus_Dic, train_mode=True, tokenize=True, level=0, addition=False)
     #test_data.load(dictionary=Corpus_Dic, train_mode=True, tokenize=True)
 
 # save the dictionary
