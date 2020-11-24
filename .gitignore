@@ -136,3 +136,5 @@ emb_word2vec_format.txt
 tec_sim_emoevent.json
 .vscode/settings.json
 wiki-news-300d-1M.vec
+tec_sim_twitter.json
+.gitignore
