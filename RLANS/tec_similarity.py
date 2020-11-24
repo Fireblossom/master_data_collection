@@ -7,7 +7,7 @@ from data_collection.py_additional.py_emoevent import EmoeventLoader, TwitterLoa
 import json
 
 
-loader = TecLoader(tokenize=True, augment=False)
+'''loader = TecLoader(tokenize=True, augment=False)
 data = loader.load_tec('tec_train.txt', level=0)
 doc_list = data.get_data()
 dictionary = corpora.Dictionary()
@@ -23,7 +23,7 @@ loader.load_emoevent('dataset_emotions_EN.txt', data)
 tec_sim_emoevent = []
 for query in [dictionary.doc2bow(doc, allow_update=False) for doc in data.get_data()]:
     tec_sim_emoevent.append(index[query].tolist())
-json.dump(tec_sim_emoevent, open('tec_sim_emoevent.json', 'w'), indent=2)
+json.dump(tec_sim_emoevent, open('tec_sim_emoevent.json', 'w'), indent=2)'''
 
 
 loader = TecLoader(tokenize=True, augment=False)
@@ -47,7 +47,7 @@ loader.load_twitter('RLANS/data_collection/scrape/surprise_en.txt', data)
 tec_sim_twitter = []
 for query in [dictionary.doc2bow(doc, allow_update=False) for doc in data.get_data()]:
     tec_sim_twitter.append(index[query].tolist())
-json.dump(sim_emoevent, open('tec_sim_twitter.json', 'w'), indent=2)
+json.dump(tec_sim_twitter, open('tec_sim_twitter.json', 'w'), indent=2)
 
 
 attributes = []
@@ -66,7 +66,7 @@ loader.load_emoevent('dataset_emotions_EN.txt', data)
 isear_sim_emoevent = []
 for query in [dictionary.doc2bow(doc, allow_update=False) for doc in data.get_data()]:
     isear_sim_emoevent.append(index[query].tolist())
-json.dump(sim_emoevent, open('isear_sim_emoevent.json', 'w'), indent=2)
+json.dump(isear_sim_emoevent, open('isear_sim_emoevent.json', 'w'), indent=2)
 
 
 attributes = []
@@ -86,4 +86,4 @@ loader.load_story('RLANS/data_collection/scrape/story.json', data)
 isear_sim_story = []
 for query in [dictionary.doc2bow(doc, allow_update=False) for doc in data.get_data()]:
     isear_sim_story.append(index[query].tolist())
-json.dump(sim_emoevent, open('isear_sim_story.json', 'w'), indent=2)
+json.dump(isear_sim_story, open('isear_sim_story.json', 'w'), indent=2)

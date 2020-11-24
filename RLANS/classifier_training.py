@@ -61,6 +61,12 @@ parser.add_argument('--tokenize', action='store_true',
                     help='use tokenizer')
 parser.add_argument('--level', type=int, default=0, metavar='N',
                     help='vocab level')
+parser.add_argument('--embedding', action='store_true',
+                    help='vocab level')
+parser.add_argument('--bidirection', action='store_true',
+                    help='vocab level')
+parser.add_argument('--full', action='store_true',
+                    help='vocab level')
 
 
 args = parser.parse_args()
@@ -86,19 +92,14 @@ if torch.cuda.is_available():
 ###############################################################################
 # Load data
 ###############################################################################
-dic_exists = os.path.isfile(os.path.join(args.data, 'action_dictionary.pkl'))
+dic_path = os.path.join(args.data, 'action_dictionary_full.pkl') if args.full else os.path.join(args.data, 'action_dictionary.pkl')
+dic_exists = os.path.isfile(dic_path)
 print(dic_exists)
 if dic_exists:
-    with open(os.path.join(args.data, 'action_dictionary.pkl'), 'rb') as input:
+    with open(dic_path, 'rb') as input:
         Corpus_Dic = pickle.load(input)
 else:
     Corpus_Dic = data.Dictionary()
-
-glove = False
-if glove:
-    import gensim
-    glove_model = gensim.models.KeyedVectors.load_word2vec_format('emb_word2vec_format.txt')
-    Corpus_Dic.build_dic(glove_model.index2word)
 
 test_data_name = os.path.join(args.data, 'test.csv')
 
@@ -112,6 +113,9 @@ if args.data == 'ssec':
     train_data.labels = json.load(open('ssec_new_label.json'))
     test_data.load(dictionary=Corpus_Dic, train_mode=False)
     test_data.labels = json.load(open('ssec_new_label_test.json'))
+elif args.data == 'merge':
+    import merge_tec_isear
+    Corpus_Dic, train_data, test_data = merge_tec_isear.get_merged_dataset(Corpus_Dic=Corpus_Dic, tokenize=tokenize, level=args.level)
 else:
     train_data = data.TEC_ISEAR_DataSet(args.data)
     test_data = data.TEC_ISEAR_DataSet(args.data)
@@ -119,10 +123,10 @@ else:
     test_data.load(dictionary=Corpus_Dic, train_mode=False, tokenize=tokenize, level=args.level)
 
 # save the dictionary
-with open(os.path.join(args.data, 'action_dictionary.pkl'), 'wb') as output:
+with open(dic_path, 'wb') as output:
     pickle.dump(Corpus_Dic, output, pickle.HIGHEST_PROTOCOL)
 print("load data and save the dictionary to '{}'".
-        format(os.path.join(args.data, 'action_dictionary.pkl')))
+        format(dic_path))
 
 bitch_size = args.batch_size
 train_loader = torch.utils.data.DataLoader(dataset=train_data,
@@ -143,14 +147,12 @@ print('The size of the dictionary is', len(Corpus_Dic))
 learning_rate = args.lr
 
 ntokens = len(Corpus_Dic)
-if not glove:
-    model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid,
-                        args.nlayers, args.nclass, args.dropout_em, 
-                        args.dropout_rnn, args.dropout_cl, args.tied).to(device)
-else:
-    model = model.RNNModel(args.model, ntokens, 300, args.nhid,
-                        args.nlayers, args.nclass, args.dropout_em, 
-                        args.dropout_rnn, args.dropout_cl, args.tied, 60, glove_model.vectors).to(device)
+
+model = model.RNNModel(args.model, ntokens, 300, args.nhid,
+                    args.nlayers, args.nclass, args.dropout_em, 
+                    args.dropout_rnn, args.dropout_cl, args.tied, 60, args.bidirection).to(device)
+if args.embedding:
+    model.load_embedding('wiki-news-300d-1M.vec', Corpus_Dic, device)
 
 criterion = nn.BCEWithLogitsLoss() if args.data == 'ssec' else nn.CrossEntropyLoss(reduction='none')
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) #(model.parameters(), lr=learning_rate, momentum=0.9)

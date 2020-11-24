@@ -15,7 +15,7 @@ parser.add_argument('--data', type=str, default=os.getcwd()+'/ag_news_csv/',
                     help='location of the data corpus')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
-parser.add_argument('--emsize', type=int, default=256,
+parser.add_argument('--emsize', type=int, default=300,
                     help='size of word embeddings')
 parser.add_argument('--nhid', type=int, default=512,
                     help='number of hidden units per layer')
@@ -54,6 +54,15 @@ parser.add_argument('--save', type=str,
                     help='path to save the final model')
 parser.add_argument('--number_per_class', type=int, default=1000,
                     help='location of the data corpus')
+parser.add_argument('--addition', type=str, default='',
+                    help='additional data')
+parser.add_argument('--embedding', action='store_true',
+                    help='use CUDA')
+parser.add_argument('--bidirection', action='store_true',
+                    help='use CUDA')
+parser.add_argument('--tokenize', action='store_true',
+                    help='use CUDA')
+
 
 args = parser.parse_args()
 
@@ -78,6 +87,7 @@ device = torch.device("cuda" if args.cuda else "cpu")
 ###############################################################################
 # Load data
 ###############################################################################
+addition = False if args.addition == '' else args.addition
 dic_exists = os.path.isfile(os.path.join(args.data, 'action_dictionary.pkl'))
 if dic_exists:
     with open(os.path.join(args.data, 'action_dictionary.pkl'), 'rb') as input:
@@ -102,7 +112,7 @@ if args.data == 'ssec':
 else:
     train_data = data.TEC_ISEAR_DataSet(args.data)
     #test_data = data.TEC_ISEAR_DataSet(args.data)
-    train_data.load(dictionary=Corpus_Dic, train_mode=True, tokenize=True, level=0, addition=False)
+    train_data.load(dictionary=Corpus_Dic, train_mode=True, tokenize=args.tokenize, level=0, addition=False)
     #test_data.load(dictionary=Corpus_Dic, train_mode=True, tokenize=True)
 
 # save the dictionary
@@ -126,7 +136,9 @@ learning_rate = args.lr
 
 ntokens = len(Corpus_Dic)
 model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid,
-                       args.nlayers, args.dropout_em, args.dropout_rnn, args.dropout_cl, args.tied).to(device)
+                       args.nlayers, args.dropout_em, args.dropout_rnn, args.dropout_cl, args.tied, bidirection=args.bidirection).to(device)
+if args.embedding:
+    model.load_embedding('emb_word2vec_format.txt', Corpus_Dic, device)
 
 criterion = nn.CrossEntropyLoss(reduction='none')
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)

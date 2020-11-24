@@ -121,7 +121,12 @@ class SplitCrossEntropyLoss(nn.Module):
 
         # We only add the tombstones if we have more than one split
         if self.nsplits > 1:
+            # print([head_weight, self.tail_vectors])
+            # print(head_weight.size())
+            # print(self.tail_vectors.size())
             head_weight = self.tail_vectors if head_weight is None else torch.cat([head_weight, self.tail_vectors])
+            # print(head_bias.size())
+            # print(self.tail_bias.size())
             head_bias = self.tail_bias if head_bias is None else torch.cat([head_bias, self.tail_bias])
 
         # Perform the softmax calculation for the word vectors in the head for all splits
@@ -159,6 +164,8 @@ class SplitCrossEntropyLoss(nn.Module):
                 head_entropy = softmaxed_head_res[:, -idx]
                 # All indices are shifted - if the first split handles [0,...,499] then the 500th in the second split will be 0 indexed
                 indices = (split_targets[idx] - self.splits[idx]).view(-1, 1)
+                # print(indices)
+                # print(tail_res.size())
                 # Warning: if you don't squeeze, you get an N x 1 return, which acts oddly with broadcasting
                 tail_entropy = torch.gather(torch.nn.functional.log_softmax(tail_res, dim=-1), dim=1, index=indices).squeeze()
                 entropy = -(head_entropy + tail_entropy)

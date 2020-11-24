@@ -10,6 +10,7 @@ from spacy.symbols import ORTH
 import pickle
 import emoji
 from data_collection.py_isear.isear_loader_spacy import IsearDataSet
+import json
 
 nlp = spacy.load("en_core_web_sm")
 tokenizer = nlp.tokenizer
@@ -57,6 +58,27 @@ class EmoeventLoader:
         for line in f_tec:
             splited = html.unescape(line).split('\t')
             text_data.append(splited[1])
+            # print(splited[2])
+            target.append(0)
+        f_tec.close()
+        if tokenize:
+            text_data = cleaning(tokenize, text_data)
+
+        isear_dataset.set_data(isear_dataset.get_data() + text_data)
+        isear_dataset.set_target(isear_dataset.get_target() + target)
+
+
+class StoryLoader:
+    def __init__(self,
+                 tokenize=True):
+        self.tokenize = tokenize
+
+    def load_story(self, s_tec_path, isear_dataset, tokenize=True):
+        f_tec = json.load(open(s_tec_path))
+        text_data = []
+        target = []
+        for line in f_tec:
+            text_data.append(line)
             # print(splited[2])
             target.append(0)
         f_tec.close()
