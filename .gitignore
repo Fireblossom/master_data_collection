@@ -123,9 +123,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-
-.idea/
-.vscode/
-.ipynb_checkpoints/
-GoogleNews-vectors-negative300.bin.gz
+data_collection/.gitattributes

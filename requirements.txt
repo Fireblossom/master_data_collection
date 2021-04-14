@@ -9,3 +9,5 @@ langdetect
 gensim
 textblob
 googletrans 
+emoji
+textaugment

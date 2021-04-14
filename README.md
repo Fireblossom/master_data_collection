@@ -1,12 +1,4 @@
-## input
-raw dataset file
+# master_thesis_code
 
-##output
-dataset object
-
-`if tokenized == True:` 
-
-the text fields are lists of tokens.
-
-`else`
-the text fields are string.
+run on server, see:
+`python exe.py`
